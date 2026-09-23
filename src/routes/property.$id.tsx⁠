@@ -1,0 +1,158 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { MapPin, BedDouble, Ruler, ArrowRight, Share2, Heart, Phone, Mail } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { StatusBadge } from "@/components/properties/StatusBadge";
+import { TYPE_LABELS } from "@/lib/constants";
+import { formatNumber, formatPrice } from "@/lib/format";
+import type { Property } from "@/lib/types";
+
+export const Route = createFileRoute("/property/$id")({
+  component: PropertyDetailsPage,
+});
+
+function PropertyDetailsPage() {
+  const { id } = Route.useParams();
+
+  const { data: property, isLoading } = useQuery({
+    queryKey: ["property", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      return data as Property;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-sm text-muted-foreground">جارٍ تحميل تفاصيل العقار...</p>
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="mx-auto max-w-[1400px] px-4 py-16 text-center">
+        <h2 className="font-display text-2xl font-bold">العقار غير موجود</h2>
+        <p className="mt-2 text-sm text-muted-foreground">عذراً، لم نتمكن من العثور على العقار المطلوب.</p>
+        <Link to="/" className="mt-6 inline-block rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground">
+          العودة للرئيسية
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
+      <div className="mb-6 flex items-center justify-between">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowRight className="size-4" />
+          العودة للرئيسية
+        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              alert("تم نسخ رابط العقار");
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-surface-2"
+          >
+            <Share2 className="size-4" /> مشاركة
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-6 grid gap-2 md:grid-cols-2">
+        <div className="aspect-[16/10] overflow-hidden rounded-xl bg-muted md:aspect-[4/3]">
+          {property.images?.[0] ? (
+            <img src={property.images[0]} alt={property.name} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">لا توجد صورة</div>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {[1, 2, 3, 4].map((index) => (
+            <div key={index} className="aspect-[4/3] overflow-hidden rounded-xl bg-muted">
+              {property.images?.[index] ? (
+                <img src={property.images[index]} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground/50">صورة إضافية</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <div>
+            <div className="flex items-center justify-between gap-4 mb-2">
+              <span className="text-xs font-medium text-muted-foreground bg-surface-2 px-2.5 py-1 rounded-md">
+                {TYPE_LABELS[property.property_type] ?? "عقار"}
+              </span>
+              <StatusBadge status={property.status} />
+            </div>
+            <h1 className="font-display text-2xl font-bold sm:text-3xl">{property.name}</h1>
+            <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
+              <MapPin className="size-4" />
+              {property.district}، {property.city}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-6 rounded-xl border border-border bg-card p-6">
+            {property.beds > 0 && (
+              <div className="flex items-center gap-2">
+                <BedDouble className="size-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">الغرف</p>
+                  <p className="font-display font-semibold">{formatNumber(property.beds)} غرف</p>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Ruler className="size-5 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">المساحة</p>
+                <p className="font-display font-semibold">{formatNumber(property.area)} م²</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-display text-lg font-bold mb-3">وصف العقار</h3>
+            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+              {property.description || "لا يوجد وصف متاح لهذا العقار."}
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <div className="sticky top-20 rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">السعر المطلوب</p>
+              <p className="font-display text-3xl font-bold text-gold">{formatPrice(property.price)} ريال</p>
+            </div>
+
+            <hr className="border-border" />
+
+            <div className="space-y-3">
+              <h4 className="font-display font-semibold text-sm">تواصل مع المعلن</h4>
+              <button
+                onClick={() => alert("خاصية الاتصال ستتوفر قريباً")}
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <Phone className="size-4" /> اتصال مباشر
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
