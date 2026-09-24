@@ -1,7 +1,9 @@
-import { lazy, Suspense } from "react";
+import { useEffect, useState } from "react";
 import type { ComponentProps } from "react";
+import dynamic from "next/dynamic"; // أو الاستيراد المتوافق مع بيئتك
 
-const PropertyMap = lazy(() => import("./PropertyMap"));
+// سنقوم بتحميل مكون الخريطة وحمايته ضد التعليق
+import PropertyMap from "./PropertyMap";
 
 type MapProps = ComponentProps<typeof PropertyMap>;
 
@@ -19,9 +21,15 @@ function MapFallback({ className }: { className?: string | undefined }) {
 }
 
 export function ClientMap(props: MapProps) {
-  return (
-    <Suspense fallback={<MapFallback className={props.className} />}>
-      <PropertyMap {...props} />
-    </Suspense>
-  );
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <MapFallback className={props.className} />;
+  }
+
+  return <PropertyMap {...props} />;
 }
