@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
 import type { ComponentProps } from "react";
-import dynamic from "next/dynamic"; // أو الاستيراد المتوافق مع بيئتك
-
-// سنقوم بتحميل مكون الخريطة وحمايته ضد التعليق
 import PropertyMap from "./PropertyMap";
 
 type MapProps = ComponentProps<typeof PropertyMap>;
