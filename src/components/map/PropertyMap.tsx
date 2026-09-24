@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
@@ -18,7 +18,13 @@ function pinIcon(color: string) {
 function FlyTo({ target }: { target: [number, number] | null }) {
   const map = useMap();
   useEffect(() => {
-    if (target) map.flyTo(target, Math.max(map.getZoom(), 13), { duration: 0.8 });
+    if (target && map) {
+      try {
+        map.flyTo(target, 14, { duration: 0.8 });
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }, [target, map]);
   return null;
 }
@@ -53,12 +59,15 @@ export default function PropertyMap({
   onPick,
   className,
 }: Props) {
+  const mapRef = useRef<L.Map | null>(null);
+
   return (
     <MapContainer
       center={SAUDI_CENTER}
       zoom={6}
-      scrollWheelZoom
+      scrollWheelZoom={true}
       className={className ?? "h-full w-full"}
+      ref={mapRef}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -77,7 +86,7 @@ export default function PropertyMap({
           <Marker
             key={p.id}
             position={[p.lat, p.lng]}
-            icon={pinIcon(STATUS_COLORS[p.status])}
+            icon={pinIcon(STATUS_COLORS[p.status] || "#A9782E")}
             eventHandlers={{ click: () => onSelect?.(p) }}
             opacity={selectedId && selectedId !== p.id ? 0.7 : 1}
           >
