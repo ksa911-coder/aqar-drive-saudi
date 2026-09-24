@@ -1,5 +1,4 @@
 import { lazy, Suspense } from "react";
-import { ClientOnly } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
 
 const PropertyMap = lazy(() => import("./PropertyMap"));
@@ -21,10 +20,8 @@ function MapFallback({ className }: { className?: string | undefined }) {
 
 export function ClientMap(props: MapProps) {
   return (
-    <ClientOnly fallback={<MapFallback className={props.className} />}>
-      <Suspense fallback={<MapFallback className={props.className} />}>
-        <PropertyMap {...props} />
-      </Suspense>
-    </ClientOnly>
+    <Suspense fallback={<MapFallback className={props.className} />}>
+      <PropertyMap {...props} />
+    </Suspense>
   );
 }
