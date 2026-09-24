@@ -1,13 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { RouterProvider, createRouter } from '@tanstack/react-router'
-import { routeTree } from './routeTree.gen'
+import { RouterProvider } from '@tanstack/react-router'
+import { getRouter } from './router'
 import './styles.css'
 
-// إنشاء الـ Router باستخدام شجرة المسارات المولدة
-const router = createRouter({ routeTree })
+// استخدام الإعداد الجاهز للـ Router من ملف router.tsx
+const router = getRouter()
 
-// تسجيل الـ Router لضمان التوافق مع الأنواع (TypeScript)
+// تسجيل الـ Router لضمان توافق الأنواع (TypeScript)
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
