@@ -19,6 +19,10 @@ export interface Property {
   approved: boolean;
   sold_at: string | null;
   created_at: string;
+  // الحقول المضافة لحل مشكلة أخطاء الخريطة:
+  plot_number?: string | null;
+  street_name?: string | null;
+  street_width?: number | null;
 }
 
 export interface PropertyRequest {
