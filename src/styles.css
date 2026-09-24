@@ -4,15 +4,173 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* تخصيصات عامة لضمان عمل الخطوط والتصميم بسلاسة */
-* {
-  box-sizing: border-box;
+/*
+ * عقار درايف — Design system
+ * Warm cream canvas + white surfaces + restrained gold accent.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-available: var(--available);
+  --color-reserved: var(--reserved);
+  --color-sold: var(--sold);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-display: "Cairo", system-ui, sans-serif;
+  --font-sans: "Tajawal", system-ui, sans-serif;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  direction: rtl;
-  text-align: right;
+:root {
+  --radius: 0.5rem;
+  --background: #faf6ed;
+  --foreground: #241f17;
+  --surface: #ffffff;
+  --surface-2: #f5efe3;
+  --card: #ffffff;
+  --card-foreground: #241f17;
+  --popover: #ffffff;
+  --popover-foreground: #241f17;
+  --primary: #a9782e;
+  --primary-foreground: #ffffff;
+  --gold: #a9782e;
+  --gold-soft: #d8b979;
+  --secondary: #f2ebde;
+  --secondary-foreground: #241f17;
+  --muted: #f2ebde;
+  --muted-foreground: #756b5e;
+  --accent: #eee4d3;
+  --accent-foreground: #7b531b;
+  --destructive: oklch(0.647 0.145 25);
+  --destructive-foreground: #ffffff;
+  --available: oklch(0.715 0.098 156);
+  --reserved: oklch(0.772 0.135 78);
+  --sold: oklch(0.647 0.145 25);
+  --border: #ded5c7;
+  --input: #d7cdbd;
+  --ring: #a9782e;
+  --chart-1: #a9782e;
+  --chart-2: oklch(0.715 0.098 156);
+  --chart-3: oklch(0.772 0.135 78);
+  --chart-4: oklch(0.647 0.145 25);
+  --chart-5: #d8b979;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #241f17;
+  --sidebar-primary: #a9782e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f2ebde;
+  --sidebar-accent-foreground: #241f17;
+  --sidebar-border: #ded5c7;
+  --sidebar-ring: #a9782e;
+}
+
+.dark {
+  --background: #faf6ed;
+  --foreground: #241f17;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+}
+
+@utility hairline {
+  border-top: 1px solid var(--color-border);
+}
+
+@utility section-pad {
+  padding-block: 5rem;
+}
+
+/* Leaflet treatment */
+.leaflet-container {
+  background: var(--color-background);
+  font-family: var(--font-sans);
+}
+
+.leaflet-control-zoom a,
+.leaflet-bar a {
+  background: var(--color-surface-2);
+  color: var(--color-foreground);
+  border-color: var(--color-border);
+}
+
+.leaflet-control-attribution {
+  background: color-mix(in oklab, var(--color-card) 88%, transparent);
+  color: var(--color-muted-foreground);
+}
+
+.leaflet-control-attribution a {
+  color: var(--color-gold);
+}
+
+.aqar-pin {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid var(--color-card);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-gold) 18%, transparent);
 }
