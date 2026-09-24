@@ -3,9 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { ClientMap } from "@/components/map/ClientMap";
 import { PropertyCard } from "@/components/properties/PropertyCard";
-import { StatusBadge } from "@/components/properties/StatusBadge";
 import { AddPropertyDialog } from "@/components/properties/AddPropertyDialog";
-import { RequestDialog } from "@/components/properties/RequestDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -18,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { usePublicProperties } from "@/lib/properties";
-import { PROPERTY_TYPES, STATUS_LABELS, TYPE_LABELS } from "@/lib/constants";
+import { PROPERTY_TYPES, STATUS_LABELS } from "@/lib/constants";
 import { formatNumber, formatPrice } from "@/lib/format";
 import type { Property, PropertyStatus } from "@/lib/types";
 
@@ -29,11 +27,6 @@ export const Route = createFileRoute("/properties")({
       {
         name: "description",
         content: "تصفح عقارات المملكة على خريطة تفاعلية بإحداثيات حقيقية مع فلترة حسب السعر والحالة.",
-      },
-      { property: "og:title", content: "خريطة العقارات — عقار درايف" },
-      {
-        property: "og:description",
-        content: "خريطة تفاعلية لعقارات السوق السعودي مع بحث وفلترة مباشرة.",
       },
     ],
   }),
@@ -81,7 +74,6 @@ function PropertiesPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
-        {/* Sidebar */}
         <aside className="flex max-h-[78vh] flex-col overflow-hidden rounded-xl border border-border bg-surface">
           <div className="space-y-3 border-b border-border p-4">
             <div className="relative">
@@ -152,7 +144,6 @@ function PropertiesPage() {
           </div>
         </aside>
 
-        {/* Map */}
         <div className="relative h-[78vh] overflow-hidden rounded-xl border border-border">
           <ClientMap
             properties={filtered}
@@ -160,55 +151,6 @@ function PropertiesPage() {
             focus={selected ? [selected.lat, selected.lng] : null}
             onSelect={setSelected}
           />
-
-          {selected && (
-            <div className="absolute bottom-4 left-4 z-[1000] w-[300px] rounded-xl border border-border bg-surface/95 p-4 backdrop-blur">
-              {selected.images?.[0] && (
-                <img
-                  src={selected.images[0]}
-                  alt={selected.name}
-                  loading="lazy"
-                  className="mb-3 h-32 w-full rounded-md object-cover"
-                />
-              )}
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-display text-base">{selected.name}</h3>
-                <StatusBadge status={selected.status} />
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {selected.district}، {selected.city} ·{" "}
-                {TYPE_LABELS[selected.property_type] ?? "عقار"}
-              </p>
-              {selected.description && (
-                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                  {selected.description}
-                </p>
-              )}
-              <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3 text-center text-xs">
-                <div>
-                  <p className="text-muted-foreground">الغرف</p>
-                  <p className="text-foreground">{formatNumber(selected.beds)}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">المساحة</p>
-                  <p className="text-foreground">{formatNumber(selected.area)} م²</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">السعر</p>
-                  <p className="text-gold">{formatPrice(selected.price)}</p>
-                </div>
-              </div>
-              <div className="mt-3">
-                {user ? (
-                  <RequestDialog property={selected} />
-                ) : (
-                  <Button asChild size="sm" className="w-full">
-                    <Link to="/auth">سجّل الدخول لطلب معاينة</Link>
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
