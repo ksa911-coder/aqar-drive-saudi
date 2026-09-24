@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, FileSignature, Headphones, MonitorPlay } from "lucide-react";
 import heroVilla from "@/assets/hero-villa.jpg";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,8 @@ const steps = [
 ];
 
 function Landing() {
+  const navigate = useNavigate();
+
   return (
     <div>
       {/* Hero */}
@@ -66,13 +68,18 @@ function Landing() {
               على الخريطة ومتابعة موثّقة لكل خطوة.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg">
-                <Link to="/properties">
-                  تصفح العقارات <ArrowLeft className="size-4" />
-                </Link>
+              <Button 
+                size="lg" 
+                onClick={() => navigate({ to: "/properties" })}
+              >
+                تصفح العقارات <ArrowLeft className="size-4" />
               </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/auth">أنشئ حسابك</Link>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={() => navigate({ to: "/auth" })}
+              >
+                أنشئ حسابك
               </Button>
             </div>
             <dl className="grid max-w-md grid-cols-3 gap-6 border-t border-border/70 pt-6">
@@ -143,11 +150,18 @@ function Landing() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button asChild size="lg">
-              <Link to="/auth">إنشاء حساب</Link>
+            <Button 
+              size="lg" 
+              onClick={() => navigate({ to: "/auth" })}
+            >
+              إنشاء حساب
             </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link to="/properties">تصفح الخريطة</Link>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              onClick={() => navigate({ to: "/properties" })}
+            >
+              تصفح الخريطة
             </Button>
           </div>
         </div>
