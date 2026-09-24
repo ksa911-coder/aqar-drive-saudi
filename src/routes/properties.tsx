@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search } from "lucide-react";
-// import { ClientMap } from "@/components/map/ClientMap";
+import { ClientMap } from "@/components/map/ClientMap";
 import { PropertyCard } from "@/components/properties/PropertyCard";
 import { StatusBadge } from "@/components/properties/StatusBadge";
 import { AddPropertyDialog } from "@/components/properties/AddPropertyDialog";
@@ -152,17 +152,63 @@ function PropertiesPage() {
           </div>
         </aside>
 
-        {/* Map (Temporarily Commented Out for Testing) */}
-        <div className="relative h-[78vh] flex items-center justify-center rounded-xl border border-border bg-surface text-muted-foreground">
-          <p>تم إيقاف الخريطة مؤقتاً للاختبار…</p>
-          {/* 
+        {/* Map */}
+        <div className="relative h-[78vh] overflow-hidden rounded-xl border border-border">
           <ClientMap
             properties={filtered}
             selectedId={selected?.id ?? null}
             focus={selected ? [selected.lat, selected.lng] : null}
             onSelect={setSelected}
           />
-          */}
+
+          {selected && (
+            <div className="absolute bottom-4 left-4 z-[1000] w-[300px] rounded-xl border border-border bg-surface/95 p-4 backdrop-blur">
+              {selected.images?.[0] && (
+                <img
+                  src={selected.images[0]}
+                  alt={selected.name}
+                  loading="lazy"
+                  className="mb-3 h-32 w-full rounded-md object-cover"
+                />
+              )}
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-display text-base">{selected.name}</h3>
+                <StatusBadge status={selected.status} />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {selected.district}، {selected.city} ·{" "}
+                {TYPE_LABELS[selected.property_type] ?? "عقار"}
+              </p>
+              {selected.description && (
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  {selected.description}
+                </p>
+              )}
+              <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3 text-center text-xs">
+                <div>
+                  <p className="text-muted-foreground">الغرف</p>
+                  <p className="text-foreground">{formatNumber(selected.beds)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">المساحة</p>
+                  <p className="text-foreground">{formatNumber(selected.area)} م²</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">السعر</p>
+                  <p className="text-gold">{formatPrice(selected.price)}</p>
+                </div>
+              </div>
+              <div className="mt-3">
+                {user ? (
+                  <RequestDialog property={selected} />
+                ) : (
+                  <Button asChild size="sm" className="w-full">
+                    <Link to="/auth">سجّل الدخول لطلب معاينة</Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
