@@ -22,24 +22,27 @@ export default function PropertyMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
 
-  // 1. إنشاء الخريطة مرة واحدة فقط
+  // 1. إنشاء الخريطة مرة واحدة فقط مع مهلة آمنة تمنع تجميد المتصفح
   useEffect(() => {
     if (!containerRef.current) return;
 
-    if (!mapRef.current) {
-      const map = L.map(containerRef.current, {
-        zoomControl: true,
-        attributionControl: false,
-      }).setView([24.7136, 46.6753], 6);
+    const timer = setTimeout(() => {
+      if (!mapRef.current && containerRef.current) {
+        const map = L.map(containerRef.current, {
+          zoomControl: true,
+          attributionControl: false,
+        }).setView([24.7136, 46.6753], 6);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-      }).addTo(map);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+        }).addTo(map);
 
-      mapRef.current = map;
-    }
+        mapRef.current = map;
+      }
+    }, 50);
 
     return () => {
+      clearTimeout(timer);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
