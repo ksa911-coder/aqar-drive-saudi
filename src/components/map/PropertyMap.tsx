@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Property } from "@/lib/types";
@@ -21,37 +21,43 @@ export default function PropertyMap({
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
+  const [isReady, setIsReady] = useState(false);
 
-  // 1. إنشاء الخريطة مرة واحدة فقط مع مهلة آمنة تمنع تجميد المتصفح
+  // تأخير بسيط للتأكد من استقرار الـ DOM تماماً وعدم تجميد المتصفح
   useEffect(() => {
-    if (!containerRef.current) return;
-
     const timer = setTimeout(() => {
-      if (!mapRef.current && containerRef.current) {
-        const map = L.map(containerRef.current, {
-          zoomControl: true,
-          attributionControl: false,
-        }).setView([24.7136, 46.6753], 6);
+      setIsReady(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-        }).addTo(map);
+  // 1. إنشاء الخريطة مرة واحدة فقط بعد جاهزية المكون
+  useEffect(() => {
+    if (!isReady || !containerRef.current) return;
 
-        mapRef.current = map;
-      }
-    }, 50);
+    if (!mapRef.current) {
+      const map = L.map(containerRef.current, {
+        zoomControl: true,
+        attributionControl: false,
+      }).setView([24.7136, 46.6753], 6);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      }).addTo(map);
+
+      mapRef.current = map;
+    }
 
     return () => {
-      clearTimeout(timer);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
         markersRef.current = {};
       }
     };
-  }, []);
+  }, [isReady]);
 
-  // 2. إدارة العلامات بكفاءة عالية بدون تجميد وأمان تام للأنواع
+  // 2. إدارة العلامات بكفاءة عالية بدون تجميد
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -59,7 +65,6 @@ export default function PropertyMap({
     const currentMarkers = markersRef.current;
     const newPropertyIds = new Set(properties.map((p) => p.id));
 
-    // إزالة العلامات التي لم تعد موجودة
     Object.keys(currentMarkers).forEach((id) => {
       if (!newPropertyIds.has(id)) {
         currentMarkers[id]?.remove();
@@ -67,7 +72,6 @@ export default function PropertyMap({
       }
     });
 
-    // إضافة أو تحديث العلامات الحالية
     properties.forEach((property) => {
       if (!property.lat || !property.lng) return;
 
