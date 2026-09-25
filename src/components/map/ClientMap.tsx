@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import type { ComponentProps } from "react";
-import PropertyMap from "./PropertyMap";
 
-type MapProps = ComponentProps<typeof PropertyMap>;
+type MapProps = ComponentProps<typeof import("./PropertyMap").default>;
+
+// تحميل الخريطة بطريقة ديناميكية بحتة تتجاوز أي مشاكل في التجميد
+const LazyPropertyMap = lazy(() => import("./PropertyMap"));
 
 export function ClientMap(props: MapProps) {
   const [isClient, setIsClient] = useState(false);
@@ -19,5 +21,15 @@ export function ClientMap(props: MapProps) {
     );
   }
 
-  return <PropertyMap {...props} />;
+  return (
+    <Suspense 
+      fallback={
+        <div className="flex h-full w-full items-center justify-center bg-surface text-sm text-muted-foreground">
+          جاري تحميل بيانات الخريطة…
+        </div>
+      }
+    >
+      <LazyPropertyMap {...props} />
+    </Suspense>
+  );
 }
