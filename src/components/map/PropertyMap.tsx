@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import type { Property } from "@/lib/types";
 
 interface PropertyMapProps {
@@ -18,92 +16,97 @@ export default function PropertyMap({
   onSelect,
   className,
 }: PropertyMapProps) {
-  const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const markersRef = useRef<{ [key: string]: L.Marker }>({});
-  const [isReady, setIsReady] = useState(false);
+  const mapRef = useRef<any>(null);
+  const markersRef = useRef<{ [key: string]: any }>({});
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // تأخير بسيط للتأكد من استقرار الـ DOM تماماً وعدم تجميد المتصفح
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
+    let isCancelled = false;
 
-  // 1. إنشاء الخريطة مرة واحدة فقط بعد جاهزية المكون
-  useEffect(() => {
-    if (!isReady || !containerRef.current) return;
+    // تحميل Leaflet ديناميكياً لتجنب تجميد خيط المتصفح الرئيسي
+    import("leaflet").then((L) => {
+      // التأكد من تحميل ملف الـ CSS الخاص بـ Leaflet ديناميكياً أيضاً
+      import("leaflet/dist/leaflet.css");
 
-    if (!mapRef.current) {
-      const map = L.map(containerRef.current, {
-        zoomControl: true,
-        attributionControl: false,
-      }).setView([24.7136, 46.6753], 6);
+      if (isCancelled || !containerRef.current) return;
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-      }).addTo(map);
+      if (!mapRef.current) {
+        const map = L.map(containerRef.current, {
+          zoomControl: true,
+          attributionControl: false,
+        }).setView([24.7136, 46.6753], 6);
 
-      mapRef.current = map;
-    }
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+        }).addTo(map);
+
+        mapRef.current = map;
+        setIsInitialized(true);
+      }
+    });
 
     return () => {
+      isCancelled = true;
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
         markersRef.current = {};
       }
     };
-  }, [isReady]);
+  }, []);
 
-  // 2. إدارة العلامات بكفاءة عالية بدون تجميد
+  // إدارة العلامات
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
+    if (!isInitialized || !mapRef.current) return;
+    
+    import("leaflet").then((L) => {
+      const map = mapRef.current;
+      if (!map) return;
 
-    const currentMarkers = markersRef.current;
-    const newPropertyIds = new Set(properties.map((p) => p.id));
+      const currentMarkers = markersRef.current;
+      const newPropertyIds = new Set(properties.map((p) => p.id));
 
-    Object.keys(currentMarkers).forEach((id) => {
-      if (!newPropertyIds.has(id)) {
-        currentMarkers[id]?.remove();
-        delete currentMarkers[id];
-      }
-    });
-
-    properties.forEach((property) => {
-      if (!property.lat || !property.lng) return;
-
-      const isSelected = property.id === selectedId;
-      const markerColor = isSelected ? "#c5a059" : "#2563eb";
-
-      const existingMarker = currentMarkers[property.id];
-      if (existingMarker) {
-        const el = existingMarker.getElement();
-        if (el) {
-          const innerDiv = el.querySelector("div");
-          if (innerDiv instanceof HTMLElement) {
-            innerDiv.style.backgroundColor = markerColor;
-          }
+      Object.keys(currentMarkers).forEach((id) => {
+        if (!newPropertyIds.has(id)) {
+          currentMarkers[id]?.remove();
+          delete currentMarkers[id];
         }
-      } else {
-        const customIcon = L.divIcon({
-          className: "leaflet-marker-reset",
-          html: `<div style="background-color: ${markerColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); cursor: pointer;"></div>`,
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
-        });
+      });
 
-        const marker = L.marker([property.lat, property.lng], { icon: customIcon });
-        marker.on("click", () => onSelect(property));
-        marker.addTo(map);
-        currentMarkers[property.id] = marker;
-      }
+      properties.forEach((property) => {
+        if (!property.lat || !property.lng) return;
+
+        const isSelected = property.id === selectedId;
+        const markerColor = isSelected ? "#c5a059" : "#2563eb";
+
+        const existingMarker = currentMarkers[property.id];
+        if (existingMarker) {
+          const el = existingMarker.getElement();
+          if (el) {
+            const innerDiv = el.querySelector("div");
+            if (innerDiv instanceof HTMLElement) {
+              innerDiv.style.backgroundColor = markerColor;
+            }
+          }
+        } else {
+          const customIcon = L.divIcon({
+            className: "leaflet-marker-reset",
+            html: `<div style="background-color: ${markerColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); cursor: pointer;"></div>`,
+            iconSize: [14, 14],
+            iconAnchor: [7, 7],
+          });
+
+          const marker = L.marker([property.lat, property.lng], { icon: customIcon });
+          marker.on("click", () => onSelect(property));
+          marker.addTo(map);
+          currentMarkers[property.id] = marker;
+        }
+      });
     });
-  }, [properties, selectedId, onSelect]);
+  }, [properties, selectedId, onSelect, isInitialized]);
 
-  // 3. التركيز على العقار المحدد
+  // التركيز على العقار المحدد
   useEffect(() => {
     if (mapRef.current && focus) {
       mapRef.current.setView(focus, 15, { animate: true });
