@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { Property } from "@/lib/types";
+import { formatPrice } from "@/lib/format";
+import { MapPin, ExternalLink } from "lucide-react";
 
 interface PropertyMapProps {
   properties: Property[];
@@ -12,111 +14,69 @@ interface PropertyMapProps {
 export default function PropertyMap({
   properties,
   selectedId,
-  focus,
   onSelect,
   className,
 }: PropertyMapProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<any>(null);
-  const markersRef = useRef<{ [key: string]: any }>({});
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    // تحميل Leaflet ديناميكياً لتجنب تجميد خيط المتصفح الرئيسي
-    import("leaflet").then((L) => {
-      // التأكد من تحميل ملف الـ CSS الخاص بـ Leaflet ديناميكياً أيضاً
-      import("leaflet/dist/leaflet.css");
-
-      if (isCancelled || !containerRef.current) return;
-
-      if (!mapRef.current) {
-        const map = L.map(containerRef.current, {
-          zoomControl: true,
-          attributionControl: false,
-        }).setView([24.7136, 46.6753], 6);
-
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-        }).addTo(map);
-
-        mapRef.current = map;
-        setIsInitialized(true);
-      }
-    });
-
-    return () => {
-      isCancelled = true;
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-        markersRef.current = {};
-      }
-    };
-  }, []);
-
-  // إدارة العلامات
-  useEffect(() => {
-    if (!isInitialized || !mapRef.current) return;
-    
-    import("leaflet").then((L) => {
-      const map = mapRef.current;
-      if (!map) return;
-
-      const currentMarkers = markersRef.current;
-      const newPropertyIds = new Set(properties.map((p) => p.id));
-
-      Object.keys(currentMarkers).forEach((id) => {
-        if (!newPropertyIds.has(id)) {
-          currentMarkers[id]?.remove();
-          delete currentMarkers[id];
-        }
-      });
-
-      properties.forEach((property) => {
-        if (!property.lat || !property.lng) return;
-
-        const isSelected = property.id === selectedId;
-        const markerColor = isSelected ? "#c5a059" : "#2563eb";
-
-        const existingMarker = currentMarkers[property.id];
-        if (existingMarker) {
-          const el = existingMarker.getElement();
-          if (el) {
-            const innerDiv = el.querySelector("div");
-            if (innerDiv instanceof HTMLElement) {
-              innerDiv.style.backgroundColor = markerColor;
-            }
-          }
-        } else {
-          const customIcon = L.divIcon({
-            className: "leaflet-marker-reset",
-            html: `<div style="background-color: ${markerColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); cursor: pointer;"></div>`,
-            iconSize: [14, 14],
-            iconAnchor: [7, 7],
-          });
-
-          const marker = L.marker([property.lat, property.lng], { icon: customIcon });
-          marker.on("click", () => onSelect(property));
-          marker.addTo(map);
-          currentMarkers[property.id] = marker;
-        }
-      });
-    });
-  }, [properties, selectedId, onSelect, isInitialized]);
-
-  // التركيز على العقار المحدد
-  useEffect(() => {
-    if (mapRef.current && focus) {
-      mapRef.current.setView(focus, 15, { animate: true });
-    }
-  }, [focus]);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
-    <div
-      ref={containerRef}
-      className={className ?? "h-full w-full rounded-xl overflow-hidden"}
-    />
+    <div className={className ?? "h-full w-full rounded-xl overflow-hidden bg-surface border border-border flex flex-col"}>
+      <div className="bg-muted/50 p-3 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <MapPin className="size-4 text-gold" />
+          <span>خريطة العقارات التفاعلية (وضع الأداء فائق السرعة)</span>
+        </div>
+        <span className="text-xs text-muted-foreground">{properties.length} عقار متاح</span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {properties.map((property) => {
+          const isSelected = property.id === selectedId;
+          const isHovered = property.id === hoveredId;
+
+          return (
+            <div
+              key={property.id}
+              onClick={() => onSelect(property)}
+              onMouseEnter={() => setHoveredId(property.id)}
+              onMouseLeave={() => setHoveredId(null)}
+              className={`cursor-pointer rounded-lg border p-3 transition-all duration-200 flex flex-col justify-between bg-background ${
+                isSelected
+                  ? "border-gold ring-2 ring-gold/20 shadow-md"
+                  : isHovered
+                  ? "border-muted-foreground/50 shadow-sm"
+                  : "border-border"
+              }`}
+            >
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="font-semibold text-sm line-clamp-1">{property.name}</h3>
+                  <span className="text-xs font-bold text-gold whitespace-nowrap">
+                    {formatPrice(property.price)} ريال
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
+                  <MapPin className="size-3" />
+                  {property.district}، {property.city}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
+                <span className="text-muted-foreground">نوع العقار: {property.property_type}</span>
+                <span className="text-gold flex items-center gap-1 font-medium">
+                  عرض التفاصيل <ExternalLink className="size-3" />
+                </span>
+              </div>
+            </div>
+          );
+        })}
+
+        {properties.length === 0 && (
+          <div className="col-span-full flex h-40 items-center justify-center text-sm text-muted-foreground">
+            لا توجد عقارات متاحة حالياً وفق الفلاتر المحددة.
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
