@@ -8,7 +8,6 @@ export function ClientMap(props: MapProps) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // مهلة بسيطة لضمان استقرار شبكة الـ DOM الخاصة بالمتصفح وعدم حدوث تجميد
     const timer = setTimeout(() => {
       setIsReady(true);
     }, 150);
