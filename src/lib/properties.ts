@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Property, PropertyRequest } from "./types";
@@ -27,46 +26,22 @@ export async function fetchAllProperties(): Promise<Property[]> {
 }
 
 export function usePublicProperties() {
-  const queryClient = useQueryClient();
-  const query = useQuery({ queryKey: propertiesKey, queryFn: fetchPublicProperties });
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("properties-public")
-      .on("postgres_changes", { event: "*", schema: "public", table: "properties" }, () => {
-        queryClient.invalidateQueries({ queryKey: propertiesKey });
-        queryClient.invalidateQueries({ queryKey: allPropertiesKey });
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  const query = useQuery({ 
+    queryKey: propertiesKey, 
+    queryFn: fetchPublicProperties,
+    staleTime: 1000 * 60 * 5, // الحفاظ على البيانات مؤقتاً لـ 5 دقائق لمنع التكرار المفرط
+  });
 
   return query;
 }
 
 export function useAllProperties(enabled = true) {
-  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: allPropertiesKey,
     queryFn: fetchAllProperties,
     enabled,
+    staleTime: 1000 * 60 * 5,
   });
-
-  useEffect(() => {
-    if (!enabled) return;
-    const channel = supabase
-      .channel("properties-admin")
-      .on("postgres_changes", { event: "*", schema: "public", table: "properties" }, () => {
-        queryClient.invalidateQueries({ queryKey: allPropertiesKey });
-        queryClient.invalidateQueries({ queryKey: propertiesKey });
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, enabled]);
 
   return query;
 }
